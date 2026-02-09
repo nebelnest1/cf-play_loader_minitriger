@@ -1,4 +1,4 @@
-/* common.js — FINAL v10 (Direct Open + Banner + Modal + AgeExit) */
+/* common.js — FINAL v11 (Hybrid: Video + Fake Image Support) */
 
 (() => {
   "use strict";
@@ -13,7 +13,7 @@
     try { window.location.replace(url); } catch { window.location.href = url; }
   };
 
-  // --- FIXED: Прямое открытие (Без черного экрана и about:blank) ---
+  // --- Прямое открытие (Без черного экрана и about:blank) ---
   const openTab = (url) => {
     try {
       // Сразу передаем URL. Адресная строка заполнится мгновенно.
@@ -247,12 +247,20 @@
     u.searchParams.set(CLONE_PARAM, "1");
     u.searchParams.set("__skipPreview", "1");
     
-    // Синхронизация времени и постера
+    // --- UPDATED: Синхронизация (Видео ИЛИ Картинка) ---
     const video = document.querySelector("video");
+    const imgFrame = document.querySelector(".xh-frame"); // Поддержка фейк-плеера
+
     if (video) {
+        // Если есть реальное видео
         u.searchParams.set("t", video.currentTime || 0);
         if (video.getAttribute("poster")) u.searchParams.set("__poster", video.getAttribute("poster"));
+    } else if (imgFrame) {
+        // Если это фейк-плеер (картинка)
+        u.searchParams.set("t", 0);
+        if (imgFrame.src) u.searchParams.set("__poster", imgFrame.src);
     }
+    
     return u.toString();
   };
 
@@ -277,7 +285,7 @@
   };
 
   // ---------------------------
-  // Click Map (ADDED BANNER LOGIC HERE)
+  // Click Map
   // ---------------------------
   const initClickMap = (cfg) => {
     const fired = { mainExit: false, back: false };
