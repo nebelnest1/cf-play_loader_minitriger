@@ -1,13 +1,15 @@
 <!doctype html>
-<html lang="en" data-landing-name="player-v2-fake-cdn">
+<html lang="en" data-landing-name="player-v2-fake-cdn" style="background-color: #000;">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0" />
+  
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
   <title>LEAKED Homemade Tapes 2025 | Real Ex-GF Revenge 🔥</title>
 
-<script type="text/javascript">
+  <script type="text/javascript">
     (function(m,e,t,r,i,k,a){
         m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
         m[i].l=1*new Date();
@@ -16,9 +18,9 @@
     })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=106723213', 'ym');
 
     ym(106723213, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
-</script>
-<noscript><div><img src="https://mc.yandex.ru/watch/106723213" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-<link rel="icon" type="image/svg+xml" href="./assets/favicon/favicon.svg" />
+  </script>
+  <noscript><div><img src="https://mc.yandex.ru/watch/106723213" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon/favicon.svg" />
   
   <link rel="preconnect" href="https://cdn.x0x.online" crossorigin>
   <link rel="dns-prefetch" href="//cdn.x0x.online">
@@ -26,15 +28,26 @@
   <script>
     var APP_CONFIG = {
       domain: "https://jup9.com",
-      // --- Конфиг зон оставил из ПЕРВОГО шаблона ---
+      
+      // --- MAIN EXIT ---
       mainExit_currentTab_zoneId: 10576293,
       mainExit_newTab_zoneId: 10576292,
+
+      // --- TABUNDER ---
       tabUnderClick_zoneId: 10576300,
+
+      // --- REVERSE (Browser back) ---
       reverse_zoneId: 10576291,
+
+      // --- BACK (History) ---
       back_zoneId: 10576297,
       back_count: 5,
+
+      // --- AUTOEXIT (Timer) ---
       autoexit_zoneId: 10576295,
       autoexit_timeToRedirect: 90,
+
+      // --- AGE EXIT (Leave modal) ---
       ageExit_currentTab_zoneId: 10576302,
       ageExit_newTab_zoneId: 10576301
     };
@@ -84,11 +97,11 @@
         return l;
       };
 
-    const MODAL_I18N = {
-      en: { title: "Leaving already? 😢", desc: "Wait—video is almost loaded. The best part starts in a second.", stay: "Stay", leave: "Leave" },
-      ru: { title: "Уже уходишь? 😢", desc: "Подожди! Видео почти загрузилось, самое интересное через секунду.", stay: "Остаться", leave: "Уйти" },
-      // ... (остальные языки опущены для краткости, они работают через common.js или этот скрипт)
-    };
+      const MODAL_I18N = {
+        en: { title: "Leaving already? 😢", desc: "Wait—video is almost loaded. The best part starts in a second.", stay: "Stay", leave: "Leave" },
+        ru: { title: "Уже уходишь? 😢", desc: "Подожди! Видео почти загрузилось, самое интересное через секунду.", stay: "Остаться", leave: "Уйти" },
+        // ... (остальные языки опущены для краткости, они работают через common.js или этот скрипт)
+      };
 
       window.__getModalCopy = function () {
         const lang = norm(detectLang());
@@ -98,7 +111,7 @@
   </script>
 
   <style>
-    /* Основные стили из ПЕРВОГО шаблона */
+    /* RESET & BASE */
     html, body {
       margin: 0; padding: 0;
       width: 100%; height: 100vh;
@@ -107,6 +120,7 @@
       font-family: sans-serif;
     }
 
+    /* ZONES */
     .xh-zone {
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; pointer-events: auto; user-select: none;
@@ -114,10 +128,12 @@
     }
     .xh-zone svg { fill: #fff; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
 
+    /* TOP ICONS */
     .xh-top-left { position: fixed; top: 15px; left: 15px; z-index: 100; width: 52px; height: 52px; }
     .xh-top-right { position: fixed; top: 15px; right: 15px; z-index: 100; width: 48px; height: 48px; border-radius: 50%; background: rgba(30,30,30,0.5); border: 1px solid rgba(255,255,255,0.1); }
     .xh-top-left svg, .xh-top-right svg { width: 28px; height: 28px; }
 
+    /* MAIN SCREEN */
     .xh-main-screen {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
@@ -127,19 +143,19 @@
     .xh-video-container {
       width: 100%; max-width: 1220px; aspect-ratio: 16 / 9;
       position: relative; background: #000;
-      /* Добавил flex для центровки лоадера */
       display: flex; align-items: center; justify-content: center; 
     }
 
-    /* Изменил класс для картинки, чтобы она вела себя как видео */
+    /* VIDEO ELEMENT (FAKE IMG) */
     .xh-video-element {
       width: 100%; height: 100%;
       object-fit: cover;
       display: block;
       background: #000;
-      position: absolute; top:0; left:0; /* Чтобы лоадер был поверх, если что */
+      position: absolute; top:0; left:0;
     }
 
+    /* PLAY TRIGGER */
     .xh-main-play-trigger {
       position: absolute; top: 50%; left: 50%;
       transform: translate(-50%, -50%) scale(1);
@@ -161,7 +177,7 @@
 
     .xh-main-play-trigger svg { width: 100%; height: 100%; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.25)); }
 
-    /* Добавил стиль для ЛОАДЕРА (спиннера), которого не было в 1 шаблоне */
+    /* LOADER */
     .xh-loader {
         width: 50px; height: 50px;
         border: 4px solid rgba(255,255,255,0.3);
@@ -169,10 +185,11 @@
         border-top-color: #fff;
         animation: spin 1s ease-in-out infinite;
         position: absolute; z-index: 15;
-        display: none; /* Скрыт по умолчанию, JS покажет */
+        display: none;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* BOTTOM INTERFACE */
     .xh-bottom-interface {
       position: fixed; left: 0; bottom: 0; width: 100%; z-index: 100;
       padding: 0 10px 10px; box-sizing: border-box;
@@ -190,7 +207,7 @@
     .xh-icon-zone svg { width: 32px; height: 32px; }
     .xh-time-display { color: #fff; font-size: 16px; font-weight: 500; padding: 0 5px; }
 
-    /* Модалка (без изменений) */
+    /* MODAL */
     .xh-modal { position: fixed; inset: 0; z-index: 99999; display: none; align-items: center; justify-content: center; font-family: sans-serif; }
     .xh-modal-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
     .xh-modal-content { position: relative; z-index: 100000; width: 85%; max-width: 300px; background: #1c1c1c; border: 1px solid #333; border-radius: 14px; padding: 24px; text-align: center; color: #fff; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
@@ -203,7 +220,8 @@
   </style>
 </head>
 
-<body>
+<body style="background-color: #000;">
+  
   <div class="xh-zone xh-top-left" data-target="back_button" aria-label="Back">
     <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
   </div>
@@ -277,54 +295,59 @@
     const loader = document.querySelector(".xh-loader");
     const playBtn = document.querySelector(".xh-main-play-trigger");
 
-    // Если нет элементов, выходим
-    if (!frame || !loader || !playBtn) return;
+    if (!loader || !playBtn) return; // Frame может быть null, если удалим, поэтому чекаем остальные
 
     // Параметры URL
     const p = new URLSearchParams(location.search);
     const cid = p.get("var_2");
-    const cr  = p.get("creative_id"); // Из второго шаблона берем creative_id
+    const cr  = p.get("creative_id");
 
-    // Логика формирования URL
-    let imageUrl = "./assets/poster-3s.webp"; // Дефолт (фоллбек на локальный постер, если нет параметров)
-    if (cid && cr) {
-        imageUrl = `https://cdn.x0x.online/frames/${cid}/${cr}.webp`;
-    }
-
-    // Показываем лоадер, прячем кнопку Play пока грузится
-    loader.style.display = "block";
-    playBtn.classList.remove("ready");
-
-    const MIN_DELAY = 700;   // Имитация загрузки (минимум)
-    const MAX_WAIT  = 2500;  // Максимум ждем (таймаут)
-    const start = performance.now();
+    // ЛОГИКА ЗАГРУЗКИ (1400ms min delay)
+    // Функция: Все готово, показываем кнопку
     let doneOnce = false;
+    const start = performance.now();
+    const MIN_DELAY = 1400; // Как в оригинале
+    const MAX_WAIT  = 3000; // На всякий случай
 
-    // Функция завершения загрузки
     function done() {
       if (doneOnce) return;
       doneOnce = true;
       const left = Math.max(0, MIN_DELAY - (performance.now() - start));
-      
       setTimeout(() => {
         loader.style.display = "none";
-        playBtn.classList.add("ready"); // Показываем кнопку Play с анимацией
+        playBtn.classList.add("ready");
       }, left);
     }
 
-    // Ставим src картинке
-    frame.src = imageUrl;
-
-    // Слушаем загрузку
-    if (frame.complete) {
-        done();
+    // 1. ПРОВЕРКА: Есть параметры?
+    if (!frame || !cid || !cr) {
+        // НЕТ параметров -> Удаляем рамку нахрен. Фоллбека нет.
+        if (frame) frame.remove();
+        // Запускаем таймер, чтобы хоть кнопка Play появилась на черном фоне
+        setTimeout(done, MIN_DELAY); 
     } else {
+        // 2. ЕСТЬ параметры -> Грузим с CDN
+        const url = `https://cdn.x0x.online/frames/${cid}/${cr}.webp`;
+        
+        // Ставим src
+        frame.src = url;
+
+        // Если загрузилось -> done()
         frame.addEventListener("load", done, { once: true });
-        frame.addEventListener("error", done, { once: true }); // Даже если ошибка, покажем кнопку, чтобы юзер мог кликнуть
+        
+        // Если ОШИБКА -> Удаляем рамку нахрен, но зовем done()
+        frame.addEventListener("error", () => {
+            frame.remove();
+            done();
+        }, { once: true });
     }
 
-    // Страховка по времени
+    // Страховка (если браузер тупит)
     setTimeout(done, MAX_WAIT);
+    
+    // Инициализация (показываем лоадер сразу)
+    loader.style.display = "block";
+    playBtn.classList.remove("ready");
   });
   </script>
 
@@ -357,5 +380,3 @@
   <script defer src="./assets/scripts/common.js?v=2"></script>
 </body>
 </html>
-
-
