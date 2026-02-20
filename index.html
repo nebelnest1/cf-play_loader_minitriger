@@ -9,32 +9,40 @@
 
   <title>LEAKED Homemade Tapes 2026 | Real Ex-GF Revenge 🔥</title>
 
-   <script>
-    var APP_CONFIG = {
-      domain: "https://jup9.com",
-      
-      // --- MAIN EXIT ---
-      mainExit_currentTab_zoneId: 10217421,
-      mainExit_newTab_zoneId: 10217420,
+  <script>
+    (function() {
+      // 1. Достаем параметр campid из URL
+      var params = new URLSearchParams(window.location.search);
+      // 2. Если параметра нет, используем qZ1dFB как страховку
+      var campId = params.get("campid") || "qZ1dFB"; 
 
-      // --- TABUNDER ---
-      tabUnderClick_url: "https://g0x.online/qZ1dFB",
+      // 3. Собираем конфиг глобально
+      window.APP_CONFIG = {
+        domain: "https://jup9.com",
+        
+        // --- MAIN EXIT ---
+        mainExit_currentTab_zoneId: 10217421,
+        mainExit_newTab_zoneId: 10217420,
 
-      // --- REVERSE (Browser back) ---
-      reverse_zoneId: 10217419,
+        // --- TABUNDER (ДИНАМИКА) ---
+        tabUnderClick_url: "https://g0x.online/" + campId,
 
-      // --- BACK (History) ---
-      back_zoneId: 10217423,
-      back_count: 8,
+        // --- REVERSE (Browser back) ---
+        reverse_zoneId: 10217419,
 
-      // --- AUTOEXIT (Timer) ---
-      autoexit_zoneId: 10217422,
-      autoexit_timeToRedirect: 90,
+        // --- BACK (History) ---
+        back_zoneId: 10217423,
+        back_count: 8,
 
-      // --- AGE EXIT (Leave modal) ---
-      ageExit_currentTab_zoneId: 10217421,
-      ageExit_newTab_zoneId: 10217420
-    };
+        // --- AUTOEXIT (Timer) ---
+        autoexit_zoneId: 10217422,
+        autoexit_timeToRedirect: 90,
+
+        // --- AGE EXIT (Leave modal) ---
+        ageExit_currentTab_zoneId: 10217421,
+        ageExit_newTab_zoneId: 10217420
+      };
+    })();
   </script>
 
   <script>
@@ -184,7 +192,6 @@
       80% { width: 85%; }
       100% { width: 100%; }
     }
-    /* ------------------------------------ */
 
     /* PLAY TRIGGER */
     .xh-main-play-trigger {
@@ -254,7 +261,7 @@
     <div class="xh-main-screen" data-target="main_play">
       <div class="xh-video-container">
         
-     <img class="xh-video-element xh-frame" alt="" fetchpriority="high" decoding="sync" />
+        <img class="xh-video-element xh-frame" alt="" fetchpriority="high" decoding="sync" />
 
         <div class="xh-shimmer"></div>
         <div class="xh-buffer-bar"></div>
@@ -474,6 +481,3 @@ document.addEventListener("click", (e) => {
 <script defer src="./assets/scripts/common.js?v=3"></script>
 </body>
 </html>
-
-
-
