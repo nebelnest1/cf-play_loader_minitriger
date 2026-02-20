@@ -1,4 +1,4 @@
-/* common.js — FINAL v11 (Hybrid: Video + Fake Image Support) */
+/* common.js — FINAL v11 (Hybrid: Video + Fake Image Support) — UPDATED: external_id propagated to ALL exits + tabUnderClick_url tracking injection */
 
 (() => {
   "use strict";
@@ -18,10 +18,10 @@
     try {
       // Сразу передаем URL. Адресная строка заполнится мгновенно.
       const w = window.open(url, "_blank");
-      
+
       // Сбрасываем opener для безопасности
       if (w) { try { w.opener = null; } catch {} }
-      
+
       return w || null;
     } catch {
       return null;
@@ -43,6 +43,15 @@
     s: getSP("s"), ymid: getSP("ymid"), wua: getSP("wua"),
     use_full_list_or_browsers: getSP("use_full_list_or_browsers"),
     cid: getSP("cid"), geo: getSP("geo"),
+
+    // IMPORTANT: carry ExoClick conversions_tracking across BOTH campaigns and ALL exits
+    // Put it into landing URL as: external_id={conversions_tracking}
+    external_id: getSP("external_id"),
+
+    // Optional passthrough (if you pass them / need them)
+    creative_id: getSP("creative_id"),
+    ad_campaign_id: getSP("ad_campaign_id"),
+    cost: getSP("cost"),
   };
 
   const qsFromObj = (obj) => {
@@ -89,7 +98,7 @@
 
     Object.entries(appCfg).forEach(([k, v]) => {
       if (v == null || v === "" || k === "domain") return;
-      
+
       let m = k.match(/^([a-zA-Z0-9]+)_(currentTab|newTab)_(zoneId|url)$/);
       if (m) {
         const [, name, tab, field] = m;
@@ -123,6 +132,12 @@
       os_version: osVersionCached || "", btz: getTimezoneName(), bto: String(getTimezoneOffset()),
       cmeta: buildCmeta(), pz: IN.pz || "", tb: IN.tb || "", tb_reverse: IN.tb_reverse || "",
       ae: IN.ae || "", ab2r,
+
+      // UPDATED: carry tracking params through ALL exits (AFU/back/reverse/etc.)
+      external_id: IN.external_id || "",
+      creative_id: IN.creative_id || "",
+      ad_campaign_id: IN.ad_campaign_id || "",
+      cost: IN.cost || "",
     };
     if (zoneId != null && String(zoneId) !== "") base.zoneid = String(zoneId);
     return qsFromObj(base);
@@ -135,6 +150,38 @@
     const url = new URL(base.replace(/\/+$/, "") + "/afu.php");
     url.search = buildExitQSFast({ zoneId }).toString();
     return url.toString();
+  };
+
+  // ---------------------------
+  // DIRECT URL builder (for tabUnderClick_url / any ex.url)
+  // Ensures external_id reaches the next page/campaign too.
+  // ---------------------------
+  const buildDirectUrlWithTracking = (baseUrl) => {
+    try {
+      const u = new URL(String(baseUrl), window.location.href);
+
+      const external_id = IN.external_id || "";
+      const ad_campaign_id = IN.ad_campaign_id || IN.var_2 || "";
+      const creative_id = IN.creative_id || "";
+      const cost = IN.cost || IN.b || "";
+
+      // Optional: cost/currency for target (Keitaro or PP)
+      if (cost) u.searchParams.set("cost", cost);
+      if (!u.searchParams.has("currency")) u.searchParams.set("currency", "usd");
+
+      if (external_id) u.searchParams.set("external_id", external_id);
+      if (creative_id) u.searchParams.set("creative_id", creative_id);
+      if (ad_campaign_id) u.searchParams.set("ad_campaign_id", ad_campaign_id);
+
+      // Keep original landing params too (optional)
+      if (IN.var_1 && !u.searchParams.has("var_1")) u.searchParams.set("var_1", IN.var_1);
+      if (IN.var_2 && !u.searchParams.has("var_2")) u.searchParams.set("var_2", IN.var_2);
+      if (IN.var_3 && !u.searchParams.has("var_3")) u.searchParams.set("var_3", IN.var_3);
+
+      return u.toString();
+    } catch {
+      return String(baseUrl || "");
+    }
   };
 
   // ---------------------------
@@ -172,7 +219,8 @@
 
   const resolveUrlFast = (ex, cfg) => {
     if (!ex) return "";
-    if (ex.url) return String(ex.url);
+    // UPDATED: any direct URL (tabUnderClick_url, mainExit_url, etc.) gets tracking injected
+    if (ex.url) return buildDirectUrlWithTracking(ex.url);
     if (ex.zoneId && (ex.domain || cfg?.domain)) return generateAfuUrlFast(ex.zoneId, ex.domain || cfg.domain);
     return "";
   };
@@ -246,21 +294,21 @@
     const u = new URL(window.location.href);
     u.searchParams.set(CLONE_PARAM, "1");
     u.searchParams.set("__skipPreview", "1");
-    
+
     // --- UPDATED: Синхронизация (Видео ИЛИ Картинка) ---
     const video = document.querySelector("video");
     const imgFrame = document.querySelector(".xh-frame"); // Поддержка фейк-плеера
 
     if (video) {
-        // Если есть реальное видео
-        u.searchParams.set("t", video.currentTime || 0);
-        if (video.getAttribute("poster")) u.searchParams.set("__poster", video.getAttribute("poster"));
+      // Если есть реальное видео
+      u.searchParams.set("t", video.currentTime || 0);
+      if (video.getAttribute("poster")) u.searchParams.set("__poster", video.getAttribute("poster"));
     } else if (imgFrame) {
-        // Если это фейк-плеер (картинка)
-        u.searchParams.set("t", 0);
-        if (imgFrame.src) u.searchParams.set("__poster", imgFrame.src);
+      // Если это фейк-плеер (картинка)
+      u.searchParams.set("t", 0);
+      if (imgFrame.src) u.searchParams.set("__poster", imgFrame.src);
     }
-    
+
     return u.toString();
   };
 
@@ -300,7 +348,7 @@
       // 1. БАННЕР: КАРТИНКА -> ВЫХОД
       if (t === "banner_main") {
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-        run(cfg, "mainExit"); 
+        run(cfg, "mainExit");
         return;
       }
 
@@ -308,7 +356,7 @@
       if (t === "banner_close") {
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
         if (banner) banner.style.display = "none";
-        runMicroHandoff(cfg); 
+        runMicroHandoff(cfg);
         return;
       }
 
@@ -316,8 +364,8 @@
       if (t === "back_button") {
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
         if (modal) {
-            modal.style.display = "flex";
-            fired.back = true; 
+          modal.style.display = "flex";
+          fired.back = true;
         }
         return;
       }
@@ -356,9 +404,9 @@
       // 8. MAIN EXIT (ALL OTHERS)
       if (fired.mainExit) return;
       fired.mainExit = true;
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); 
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
       run(cfg, "mainExit");
-    }, true); 
+    }, true);
   };
 
   const boot = () => {
