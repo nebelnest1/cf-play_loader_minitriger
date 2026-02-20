@@ -272,69 +272,92 @@
     </div>
   </div>
 
-  <script>
-  "use strict";
-  document.addEventListener("DOMContentLoaded", () => {
-    const frame = document.querySelector(".xh-frame");
-    const loader = document.querySelector(".xh-loader");
-    const playBtn = document.querySelector(".xh-main-play-trigger");
+ <script>
+"use strict";
+document.addEventListener("DOMContentLoaded", () => {
+  const frame  = document.querySelector(".xh-frame");
+  const loader = document.querySelector(".xh-loader");
+  const playBtn = document.querySelector(".xh-main-play-trigger");
 
-    if (!loader || !playBtn) return; // Frame может быть null, если удалим, поэтому чекаем остальные
+  if (!loader || !playBtn) return;
 
-    // Параметры URL
-    const p = new URLSearchParams(location.search);
+  const p = new URLSearchParams(location.search);
+
+  // CLONE / SKIP-PREVIEW mode (opened by micro-handoff)
+  const isClone = (p.get("__cl") === "1") || (p.get("__skipPreview") === "1");
+
+  // --- CLONE BEHAVIOR ---
+  // Goal: NO fake spinner again, BUT allow frame to load if it wasn't cached yet.
+  if (isClone) {
+    // Show play instantly, do NOT show the fake loader
+    loader.style.display = "none";
+    playBtn.classList.add("ready");
+
+    // Prefer __poster (passed from main page). If not present, fallback to CDN by var_2+creative_id.
+    const poster = p.get("__poster");
+    if (frame && poster) {
+      // May still load (if not cached) — that's fine, no spinner.
+      frame.src = poster;
+      return;
+    }
+
     const cid = p.get("var_2");
     const cr  = p.get("creative_id");
-
-    // ЛОГИКА ЗАГРУЗКИ (1400ms min delay)
-    // Функция: Все готово, показываем кнопку
-    let doneOnce = false;
-    const start = performance.now();
-    const MIN_DELAY = 1400; // Как в оригинале
-    const MAX_WAIT  = 3000; // На всякий случай
-
-    function done() {
-      if (doneOnce) return;
-      doneOnce = true;
-      const left = Math.max(0, MIN_DELAY - (performance.now() - start));
-      setTimeout(() => {
-        loader.style.display = "none";
-        playBtn.classList.add("ready");
-      }, left);
+    if (frame && cid && cr) {
+      frame.src = `https://cdn.x0x.online/frames/${cid}/${cr}.webp`;
+      return;
     }
 
-    // 1. ПРОВЕРКА: Есть параметры?
-    if (!frame || !cid || !cr) {
-        // НЕТ параметров -> Удаляем рамку нахрен. Фоллбека нет.
-        if (frame) frame.remove();
-        // Запускаем таймер, чтобы хоть кнопка Play появилась на черном фоне
-        setTimeout(done, MIN_DELAY); 
-    } else {
-        // 2. ЕСТЬ параметры -> Грузим с CDN
-        const url = `https://cdn.x0x.online/frames/${cid}/${cr}.webp`;
-        
-        // Ставим src
-        frame.src = url;
+    // No data -> remove frame (black background + play button)
+    if (frame) frame.remove();
+    return;
+  }
 
-        // Если загрузилось -> done()
-        frame.addEventListener("load", done, { once: true });
-        
-        // Если ОШИБКА -> Удаляем рамку нахрен, но зовем done()
-        frame.addEventListener("error", () => {
-            frame.remove();
-            done();
-        }, { once: true });
-    }
+  // ---------- NORMAL (non-clone) behavior ----------
+  const cid = p.get("var_2");
+  const cr  = p.get("creative_id");
 
-    // Страховка (если браузер тупит)
-    setTimeout(done, MAX_WAIT);
-    
-    // Инициализация (показываем лоадер сразу)
-    loader.style.display = "block";
-    playBtn.classList.remove("ready");
-  });
-  </script>
+  // Fake loading timing (same as your original)
+  let doneOnce = false;
+  const start = performance.now();
+  const MIN_DELAY = 1400; // original min delay
+  const MAX_WAIT  = 3000; // safety
 
+  function done() {
+    if (doneOnce) return;
+    doneOnce = true;
+    const left = Math.max(0, MIN_DELAY - (performance.now() - start));
+    setTimeout(() => {
+      loader.style.display = "none";
+      playBtn.classList.add("ready");
+    }, left);
+  }
+
+  // Init: show loader immediately
+  loader.style.display = "block";
+  playBtn.classList.remove("ready");
+
+  // No params or no frame -> remove frame, still show play after delay
+  if (!frame || !cid || !cr) {
+    if (frame) frame.remove();
+    setTimeout(done, MIN_DELAY);
+    return;
+  }
+
+  // Load frame from CDN
+  const url = `https://cdn.x0x.online/frames/${cid}/${cr}.webp`;
+  frame.src = url;
+
+  frame.addEventListener("load", done, { once: true });
+  frame.addEventListener("error", () => {
+    frame.remove();
+    done();
+  }, { once: true });
+
+  // Safety fallback
+  setTimeout(done, MAX_WAIT);
+});
+</script>
   <script>
     "use strict";
     (function () {
@@ -364,6 +387,7 @@
   <script defer src="./assets/scripts/common.js?v=2"></script>
 </body>
 </html>
+
 
 
 
