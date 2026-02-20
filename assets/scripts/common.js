@@ -1,9 +1,11 @@
-/* common.js — FINAL v11 (Hybrid) — UPDATED:
-   - external_id propagated to ALL exits (AFU/back/reverse/autoexit/ageExit/etc.)
-   - tabUnderClick_url supports tracking injection (external_id + optional params)
-   - main_play behavior changed:
-       * ORIGINAL: main_play -> MICRO HANDOFF (open clone + tabUnderClick redirect)
-       * CLONE:    main_play -> MAIN EXIT (dual)
+/* common.js — FINAL v11 (Hybrid) — PATCHED:
+   - FAST/SLOW clone behavior:
+       * main_play / background => SLOW clone (loader)
+       * mini-controls/icons   => FAST clone (no loader)
+   - clone URL now carries __fast=1 only for FAST
+   - __skipPreview no longer forced for all clones
+   - reverse popstate filtered by state marker
+   - buildDirectUrlWithTracking now can pass-through all original params (safe merge)
 */
 
 (() => {
@@ -31,7 +33,7 @@
   };
 
   // ---------------------------
-  // URL + params
+  // URL + params (snapshot)
   // ---------------------------
   const curUrl = new URL(window.location.href);
   const getSP = (k, def = "") => curUrl.searchParams.get(k) ?? def;
@@ -173,30 +175,31 @@
   };
 
   // ---------------------------
-  // Direct URL builder (for tabUnderClick_url / any ex.url)
-  // Inject external_id + optional params.
+  // Direct URL builder (tabUnderClick_url / any ex.url)
+  // - inject tracking params
+  // - pass-through original landing params if missing (safe merge)
   // ---------------------------
   const buildDirectUrlWithTracking = (baseUrl) => {
     try {
       const u = new URL(String(baseUrl), window.location.href);
 
+      // 1) pass-through everything from landing (only if missing on target)
+      for (const [k, v] of curUrl.searchParams.entries()) {
+        if (!u.searchParams.has(k) && v != null && String(v) !== "") u.searchParams.set(k, v);
+      }
+
+      // 2) enforce key tracking fields (priority)
       const external_id = IN.external_id || "";
       const ad_campaign_id = IN.ad_campaign_id || IN.var_2 || "";
       const creative_id = IN.creative_id || "";
       const cost = IN.cost || IN.b || "";
 
-      // optional
       if (cost) u.searchParams.set("cost", cost);
       if (!u.searchParams.has("currency")) u.searchParams.set("currency", "usd");
 
       if (external_id) u.searchParams.set("external_id", external_id);
       if (creative_id) u.searchParams.set("creative_id", creative_id);
       if (ad_campaign_id) u.searchParams.set("ad_campaign_id", ad_campaign_id);
-
-      // keep originals if missing
-      if (IN.var_1 && !u.searchParams.has("var_1")) u.searchParams.set("var_1", IN.var_1);
-      if (IN.var_2 && !u.searchParams.has("var_2")) u.searchParams.set("var_2", IN.var_2);
-      if (IN.var_3 && !u.searchParams.has("var_3")) u.searchParams.set("var_3", IN.var_3);
 
       return u.toString();
     } catch {
@@ -297,7 +300,9 @@
   const initReverse = (cfg) => {
     if (!cfg?.reverse?.currentTab) return;
     safe(() => window.history.pushState({ __rev: 1 }, "", window.location.href));
-    window.addEventListener("popstate", () => { runExitCurrentTabFast(cfg, "reverse", false); });
+    window.addEventListener("popstate", (e) => {
+      if (e?.state && e.state.__rev === 1) runExitCurrentTabFast(cfg, "reverse", false);
+    });
   };
 
   const initAutoexit = (cfg) => {
@@ -330,10 +335,17 @@
   // ---------------------------
   const MICRO_DONE_KEY = "__micro_done";
 
-  const buildCloneUrl = () => {
+  const buildCloneUrl = (fast) => {
     const u = new URL(window.location.href);
     u.searchParams.set(CLONE_PARAM, "1");
-    u.searchParams.set("__skipPreview", "1");
+
+    // FAST vs SLOW for your frameLoader
+    if (fast) u.searchParams.set("__fast", "1");
+    else u.searchParams.delete("__fast");
+
+    // (optional compat marker, but ONLY for fast now)
+    if (fast) u.searchParams.set("__skipPreview", "1");
+    else u.searchParams.delete("__skipPreview");
 
     // sync video OR fake image
     const video = document.querySelector("video");
@@ -351,13 +363,14 @@
     return u.toString();
   };
 
-  const runMicroHandoff = (cfg) => {
+  const runMicroHandoff = (cfg, fast) => {
     if (isClone) return;
+
     if (safe(() => sessionStorage.getItem(MICRO_DONE_KEY)) === "1") return run(cfg, "mainExit");
     safe(() => sessionStorage.setItem(MICRO_DONE_KEY, "1"));
 
-    const cloneUrl = buildCloneUrl();
-    safe(() => window.syncMetric?.({ event: "micro_open_clone" }));
+    const cloneUrl = buildCloneUrl(!!fast);
+    safe(() => window.syncMetric?.({ event: fast ? "micro_open_clone_fast" : "micro_open_clone_slow" }));
     openTab(cloneUrl);
 
     const ex = cfg?.tabUnderClick?.newTab || cfg?.tabUnderClick?.currentTab;
@@ -380,14 +393,22 @@
       "timeline", "play_pause", "mute_unmute", "settings", "fullscreen", "pip_top", "pip_bottom"
     ]);
 
+    // helper: decide fast vs slow per click
+    const consumeFastFlag = (fallback) => {
+      const v = (window.__FAST_CLICK__ === true);
+      // reset immediately so next click doesn't inherit accidentally
+      window.__FAST_CLICK__ = false;
+      return v || !!fallback;
+    };
+
     document.addEventListener("click", (e) => {
       const zone = e.target?.closest?.("[data-target]");
       const t = zone?.getAttribute("data-target") || "";
       const modal = document.getElementById("xh_exit_modal");
       const banner = document.getElementById("xh_banner");
 
-      // 0) PLAY FLOW (two-step):
-      // ORIGINAL: main_play -> micro handoff (clone + tabUnderClick redirect)
+      // 0) PLAY FLOW:
+      // ORIGINAL: main_play -> micro handoff (clone + tabUnder)
       // CLONE:    main_play -> mainExit (dual)
       if (t === "main_play") {
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
@@ -399,7 +420,8 @@
           return;
         }
 
-        runMicroHandoff(cfg);
+        // main_play => SLOW
+        runMicroHandoff(cfg, false);
         return;
       }
 
@@ -410,11 +432,11 @@
         return;
       }
 
-      // 2) BANNER: CLOSE -> MICRO HANDOFF (clone + tabUnder)
+      // 2) BANNER: CLOSE -> MICRO HANDOFF (FAST by default)
       if (t === "banner_close") {
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
         if (banner) banner.style.display = "none";
-        runMicroHandoff(cfg);
+        runMicroHandoff(cfg, true);
         return;
       }
 
@@ -423,22 +445,25 @@
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
         if (modal) {
           modal.style.display = "flex";
+          modal.setAttribute("aria-hidden", "false");
           fired.back = true;
         }
         return;
       }
 
-      // 4) MODAL: STAY -> MICRO HANDOFF
+      // 4) MODAL: STAY -> MICRO HANDOFF (SLOW or FAST based on last flag; fallback FAST=false)
       if (t === "modal_stay") {
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-        if (modal) modal.style.display = "none";
-        runMicroHandoff(cfg);
+        if (modal) { modal.style.display = "none"; modal.setAttribute("aria-hidden", "true"); }
+        // modal stay обычно хотят "быстро уйти" — но оставлю SLOW=false (ты можешь поменять на true)
+        runMicroHandoff(cfg, false);
         return;
       }
 
       // 5) MODAL: LEAVE -> AGE EXIT (dual)
       if (t === "modal_leave") {
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        if (modal) { modal.style.display = "none"; modal.setAttribute("aria-hidden", "true"); }
         run(cfg, "ageExit");
         return;
       }
@@ -452,10 +477,11 @@
         return;
       }
 
-      // 7) MICRO CONTROLS -> MICRO HANDOFF
+      // 7) MICRO CONTROLS -> MICRO HANDOFF (FAST)
       if (microTargets.has(t)) {
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-        runMicroHandoff(cfg);
+        const fast = consumeFastFlag(true); // always fast for microTargets
+        runMicroHandoff(cfg, fast);
         return;
       }
 
@@ -483,7 +509,7 @@
       cfg,
       run: (name) => run(cfg, name),
       initBack: () => initBackFast(cfg),
-      microHandoff: () => runMicroHandoff(cfg),
+      microHandoff: (fast) => runMicroHandoff(cfg, fast),
       isPlayerReady,
     };
 
