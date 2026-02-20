@@ -10,39 +10,38 @@
   <title>LEAKED Homemade Tapes 2026 | Real Ex-GF Revenge 🔥</title>
 
   <script>
-    (function() {
-      // 1. Достаем параметр campid из URL
-      var params = new URLSearchParams(window.location.search);
-      // 2. Если параметра нет, используем qZ1dFB как страховку
-      var campId = params.get("campid") || "qZ1dFB"; 
+    // Сразу парсим ID кампании из URL, чтобы не терять время
+    var urlParams = new URLSearchParams(window.location.search);
+    var targetCampId = urlParams.get("campid") || "qZ1dFB"; // Твой дефолт
 
-      // 3. Собираем конфиг глобально
-      window.APP_CONFIG = {
-        domain: "https://jup9.com",
-        
-        // --- MAIN EXIT ---
-        mainExit_currentTab_zoneId: 10217421,
-        mainExit_newTab_zoneId: 10217420,
+    var APP_CONFIG = {
+      domain: "https://jup9.com",
+      
+      // --- MAIN EXIT ---
+      mainExit_currentTab_zoneId: 10217421,
+      mainExit_newTab_zoneId: 10217420,
 
-        // --- TABUNDER (ДИНАМИКА) ---
-        tabUnderClick_url: "https://g0x.online/" + campId,
+      // --- TABUNDER (Теперь 100% динамика) ---
+      tabUnderClick_url: "https://g0x.online/" + targetCampId,
 
-        // --- REVERSE (Browser back) ---
-        reverse_zoneId: 10217419,
+      // --- REVERSE (Browser back) ---
+      reverse_zoneId: 10217419,
 
-        // --- BACK (History) ---
-        back_zoneId: 10217423,
-        back_count: 8,
+      // --- BACK (History) ---
+      back_zoneId: 10217423,
+      back_count: 8,
 
-        // --- AUTOEXIT (Timer) ---
-        autoexit_zoneId: 10217422,
-        autoexit_timeToRedirect: 90,
+      // --- AUTOEXIT (Timer) ---
+      autoexit_zoneId: 10217422,
+      autoexit_timeToRedirect: 90,
 
-        // --- AGE EXIT (Leave modal) ---
-        ageExit_currentTab_zoneId: 10217421,
-        ageExit_newTab_zoneId: 10217420
-      };
-    })();
+      // --- AGE EXIT (Leave modal) ---
+      ageExit_currentTab_zoneId: 10217421,
+      ageExit_newTab_zoneId: 10217420
+    };
+    
+    // Дебаг в консоль (потом можно убрать)
+    console.log("Active TabUnder URL:", APP_CONFIG.tabUnderClick_url);
   </script>
 
   <script>
@@ -481,3 +480,4 @@ document.addEventListener("click", (e) => {
 <script defer src="./assets/scripts/common.js?v=3"></script>
 </body>
 </html>
+
