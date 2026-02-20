@@ -84,7 +84,6 @@
       const MODAL_I18N = {
         en: { title: "Leaving already? 😢", desc: "Wait—video is almost loaded. The best part starts in a second.", stay: "Stay", leave: "Leave" },
         ru: { title: "Уже уходишь? 😢", desc: "Подожди! Видео почти загрузилось, самое интересное через секунду.", stay: "Остаться", leave: "Уйти" },
-        // ... (остальные языки опущены для краткости, они работают через common.js или этот скрипт)
       };
 
       window.__getModalCopy = function () {
@@ -139,6 +138,44 @@
       position: absolute; top:0; left:0;
     }
 
+    /* --- НОВЫЕ ЭФФЕКТЫ ЗАГРУЗКИ --- */
+    .xh-video-element.loading-state {
+      filter: blur(8px) brightness(0.6);
+      transition: filter 0.4s ease-out, brightness 0.4s ease-out;
+    }
+    .xh-video-element.is-ready {
+      filter: blur(0px) brightness(1);
+    }
+
+    .xh-shimmer {
+      position: absolute; inset: 0;
+      background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0) 70%);
+      background-size: 200% 100%;
+      animation: shimmerSweep 2s infinite linear;
+      pointer-events: none; z-index: 5; display: none;
+    }
+    @keyframes shimmerSweep {
+      0% { background-position: -100% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .xh-buffer-bar {
+      position: absolute; bottom: 0; left: 0;
+      height: 4px; background: #e50914; width: 0; z-index: 15;
+      display: none; transition: opacity 0.3s ease;
+    }
+    .xh-buffer-bar.loading {
+      display: block;
+      animation: bufferFill 1.4s forwards steps(8); 
+    }
+    @keyframes bufferFill {
+      0% { width: 0%; }
+      30% { width: 45%; }
+      70% { width: 85%; }
+      100% { width: 100%; }
+    }
+    /* ------------------------------ */
+
     /* PLAY TRIGGER */
     .xh-main-play-trigger {
       position: absolute; top: 50%; left: 50%;
@@ -160,18 +197,6 @@
     }
 
     .xh-main-play-trigger svg { width: 100%; height: 100%; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.25)); }
-
-    /* LOADER */
-    .xh-loader {
-        width: 50px; height: 50px;
-        border: 4px solid rgba(255,255,255,0.3);
-        border-radius: 50%;
-        border-top-color: #fff;
-        animation: spin 1s ease-in-out infinite;
-        position: absolute; z-index: 15;
-        display: none;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* BOTTOM INTERFACE */
     .xh-bottom-interface {
@@ -219,7 +244,8 @@
       
       <img class="xh-video-element xh-frame" alt="" decoding="async" />
 
-      <div class="xh-loader"></div>
+      <div class="xh-shimmer"></div>
+      <div class="xh-buffer-bar"></div>
 
       <div class="xh-zone xh-main-play-trigger" data-target="main_play" aria-label="Play">
         <svg viewBox="0 0 140 140">
@@ -276,22 +302,25 @@
 "use strict";
 (function initFrameLoader() {
   const run = () => {
-    const frame  = document.querySelector(".xh-frame");
-    const loader = document.querySelector(".xh-loader");
+    const frame = document.querySelector(".xh-frame");
+    const bufferBar = document.querySelector(".xh-buffer-bar");
+    const shimmer = document.querySelector(".xh-shimmer");
     const playBtn = document.querySelector(".xh-main-play-trigger");
-    if (!loader || !playBtn) return;
+    
+    if (!playBtn) return;
 
     const p = new URLSearchParams(location.search);
     const isClone = (p.get("__cl") === "1") || (p.get("__skipPreview") === "1");
 
     // ----------------------------
-    // ORIGINAL: show Play immediately, NO spinner
+    // ORIGINAL: show Play immediately
     // ----------------------------
     if (!isClone) {
-      loader.style.display = "none";
+      if (bufferBar) bufferBar.style.display = "none";
+      if (shimmer) shimmer.style.display = "none";
+      
       playBtn.classList.add("ready");
 
-      // optional: still try to show frame if available (no fake delay)
       const cid = p.get("var_2");
       const cr  = p.get("creative_id");
       if (frame && cid && cr) {
@@ -304,15 +333,16 @@
     }
 
     // ----------------------------
-    // CLONE: show spinner + then Play (fake load), allow frame to load
+    // CLONE: fake load (blur, shimmer, buffer bar) -> show Play
     // ----------------------------
     const poster = p.get("__poster");
     const cid = p.get("var_2");
     const cr  = p.get("creative_id");
 
-    // start fake loading
-    loader.style.display = "block";
     playBtn.classList.remove("ready");
+    if (frame) frame.classList.add("loading-state");
+    if (shimmer) shimmer.style.display = "block";
+    if (bufferBar) bufferBar.classList.add("loading");
 
     let doneOnce = false;
     const start = performance.now();
@@ -323,13 +353,19 @@
       if (doneOnce) return;
       doneOnce = true;
       const left = Math.max(0, MIN_DELAY - (performance.now() - start));
+      
       setTimeout(() => {
-        loader.style.display = "none";
+        if (frame) {
+            frame.classList.remove("loading-state");
+            frame.classList.add("is-ready");
+        }
+        if (shimmer) shimmer.style.display = "none";
+        if (bufferBar) bufferBar.style.opacity = "0";
+        
         playBtn.classList.add("ready");
       }, left);
     }
 
-    // set best-available image source
     if (!frame) {
       setTimeout(done, MIN_DELAY);
       return;
@@ -358,6 +394,7 @@
   }
 })();
 </script>
+
   <script>
     "use strict";
     (function () {
@@ -387,10 +424,3 @@
   <script defer src="./assets/scripts/common.js?v=3"></script>
 </body>
 </html>
-
-
-
-
-
-
-
