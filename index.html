@@ -3,26 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0" />
-  
+
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
   <title>LEAKED Homemade Tapes 2026 | Real Ex-GF Revenge 🔥</title>
 
   <script>
-    // Сразу парсим ID кампании из URL, чтобы не терять время
+    // --- campid (safe) ---
     var urlParams = new URLSearchParams(window.location.search);
-    var targetCampId = urlParams.get("campid") || "qZ1dFB"; // Твой дефолт
+    var rawCampId = (urlParams.get("campid") || "qZ1dFB").trim();
+    var targetCampId = (/^[a-zA-Z0-9_-]{2,32}$/.test(rawCampId) ? rawCampId : "qZ1dFB");
+
+    // --- keep all query for downstream (so you don't lose attribution) ---
+    var passthroughQS = window.location.search || "";
+
+    // Global click-mode flag:
+    // - true  => FAST clone (icons/mini triggers)
+    // - false => SLOW clone (play/bg)
+    window.__FAST_CLICK__ = false;
 
     var APP_CONFIG = {
       domain: "https://jup9.com",
-      
+
       // --- MAIN EXIT ---
       mainExit_currentTab_zoneId: 10217421,
       mainExit_newTab_zoneId: 10217420,
 
-      // --- TABUNDER (Теперь 100% динамика) ---
-      tabUnderClick_url: "https://g0x.online/" + targetCampId,
+      // --- TABUNDER (dynamic + keeps QS) ---
+      tabUnderClick_url: "https://g0x.online/" + targetCampId + passthroughQS,
 
       // --- REVERSE (Browser back) ---
       reverse_zoneId: 10217419,
@@ -39,8 +48,8 @@
       ageExit_currentTab_zoneId: 10217421,
       ageExit_newTab_zoneId: 10217420
     };
-    
-    // Дебаг в консоль (потом можно убрать)
+
+    // debug (optional)
     console.log("Active TabUnder URL:", APP_CONFIG.tabUnderClick_url);
   </script>
 
@@ -55,13 +64,21 @@
           app: "landings-player-fake",
           event,
           landing_url: location.href,
-          exit_zone_id: exitZoneId ? Number(exitZoneId) : undefined,
+          exit_zone_id: exitZoneId ? String(exitZoneId) : undefined,
           landing_load_date_time: now(),
           sub_id: p.get("var_1") || ""
         }];
+
+        const body = JSON.stringify(payload);
+        const url = "https://wuytl.com/sync-metrics";
+
         if (navigator.sendBeacon) {
-          navigator.sendBeacon("https://wuytl.com/sync-metrics", JSON.stringify(payload));
+          try { navigator.sendBeacon(url, body); return; } catch {}
         }
+        // fallback
+        try {
+          fetch(url, { method: "POST", body, keepalive: true, headers: { "Content-Type": "application/json" } }).catch(() => {});
+        } catch {}
       };
 
       window.syncMetric({ event: "start" });
@@ -101,25 +118,23 @@
   </script>
 
   <style>
-    /* RESET & BASE */
     html, body {
       margin: 0; padding: 0;
-      width: 100%; height: 100vh;
+      width: 100%;
+      height: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
       background-color: #000 !important;
       overflow: hidden;
       font-family: sans-serif;
     }
 
-    /* ЗАЩИТА ОТ БЕЛОГО МИГАНИЯ (БЕСШОВНОСТЬ) */
     .fade-in-wrapper {
       animation: fadeInPage 0.35s ease-out forwards;
       opacity: 0;
     }
-    @keyframes fadeInPage {
-      to { opacity: 1; }
-    }
+    @keyframes fadeInPage { to { opacity: 1; } }
 
-    /* ZONES */
     .xh-zone {
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; pointer-events: auto; user-select: none;
@@ -127,12 +142,10 @@
     }
     .xh-zone svg { fill: #fff; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
 
-    /* TOP ICONS */
     .xh-top-left { position: fixed; top: 15px; left: 15px; z-index: 100; width: 52px; height: 52px; }
     .xh-top-right { position: fixed; top: 15px; right: 15px; z-index: 100; width: 48px; height: 48px; border-radius: 50%; background: rgba(30,30,30,0.5); border: 1px solid rgba(255,255,255,0.1); }
     .xh-top-left svg, .xh-top-right svg { width: 28px; height: 28px; }
 
-    /* MAIN SCREEN */
     .xh-main-screen {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
@@ -143,10 +156,9 @@
     .xh-video-container {
       width: 100%; max-width: 1220px; aspect-ratio: 16 / 9;
       position: relative; background: #000;
-      display: flex; align-items: center; justify-content: center; 
+      display: flex; align-items: center; justify-content: center;
     }
 
-    /* VIDEO ELEMENT (FAKE IMG) */
     .xh-video-element {
       width: 100%; height: 100%;
       object-fit: cover;
@@ -156,13 +168,8 @@
       transition: filter 0.5s ease, brightness 0.5s ease;
     }
 
-    /* --- НОВЫЕ ЭФФЕКТЫ ЗАГРУЗКИ КЛОНА --- */
-    .xh-video-element.loading-state {
-      filter: blur(12px) brightness(0.6);
-    }
-    .xh-video-element.is-ready {
-      filter: blur(0px) brightness(1);
-    }
+    .xh-video-element.loading-state { filter: blur(12px) brightness(0.6); }
+    .xh-video-element.is-ready { filter: blur(0px) brightness(1); }
 
     .xh-shimmer {
       position: absolute; inset: 0;
@@ -183,7 +190,7 @@
     }
     .xh-buffer-bar.active {
       display: block;
-      animation: bufferFill 1.4s forwards steps(10); 
+      animation: bufferFill 1.4s forwards steps(10);
     }
     @keyframes bufferFill {
       0% { width: 0%; }
@@ -192,7 +199,6 @@
       100% { width: 100%; }
     }
 
-    /* PLAY TRIGGER */
     .xh-main-play-trigger {
       position: absolute; top: 50%; left: 50%;
       transform: translate(-50%, -50%) scale(1);
@@ -214,7 +220,6 @@
 
     .xh-main-play-trigger svg { width: 100%; height: 100%; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.25)); }
 
-    /* BOTTOM INTERFACE */
     .xh-bottom-interface {
       position: fixed; left: 0; bottom: 0; width: 100%; z-index: 100;
       padding: 0 10px 10px; box-sizing: border-box;
@@ -232,7 +237,6 @@
     .xh-icon-zone svg { width: 32px; height: 32px; }
     .xh-time-display { color: #fff; font-size: 16px; font-weight: 500; padding: 0 5px; }
 
-    /* MODAL */
     .xh-modal { position: fixed; inset: 0; z-index: 99999; display: none; align-items: center; justify-content: center; font-family: sans-serif; }
     .xh-modal-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
     .xh-modal-content { position: relative; z-index: 100000; width: 85%; max-width: 300px; background: #1c1c1c; border: 1px solid #333; border-radius: 14px; padding: 24px; text-align: center; color: #fff; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
@@ -246,9 +250,8 @@
 </head>
 
 <body style="background-color: #000;">
-
   <div class="fade-in-wrapper">
-    
+
     <div class="xh-zone xh-top-left" data-target="back_button" aria-label="Back">
       <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
     </div>
@@ -259,8 +262,8 @@
 
     <div class="xh-main-screen" data-target="main_play">
       <div class="xh-video-container">
-        
-        <img class="xh-video-element xh-frame" alt="" fetchpriority="high" decoding="sync" />
+
+        <img class="xh-video-element xh-frame" alt="" fetchpriority="high" decoding="async" />
 
         <div class="xh-shimmer"></div>
         <div class="xh-buffer-bar"></div>
@@ -304,7 +307,9 @@
       </div>
     </div>
 
-  </div> <div id="xh_exit_modal" class="xh-modal" role="dialog" aria-modal="true" aria-hidden="true">
+  </div>
+
+  <div id="xh_exit_modal" class="xh-modal" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="xh-modal-overlay" data-target="modal_stay"></div>
     <div class="xh-modal-content">
       <div class="xh-modal-title" data-i18n="title"></div>
@@ -316,168 +321,151 @@
     </div>
   </div>
 
-<script>
-/* СЕКРЕТНАЯ ИНЪЕКЦИЯ: Перехватываем клики для передачи параметра __fast в common.js. 
-  Работает полностью прозрачно.
-*/
-document.addEventListener("click", (e) => {
-    const zone = e.target?.closest?.("[data-target]");
-    if (!zone) return;
-    const t = zone.getAttribute("data-target");
-    
-    // Иконки = Быстрый вход
-    const fastTargets = ["timeline", "play_pause", "mute_unmute", "settings", "fullscreen", "pip_top", "pip_bottom"];
-    
-    if (fastTargets.includes(t) || t === "main_play") {
-        const url = new URL(window.location.href);
-        if (fastTargets.includes(t)) {
-            url.searchParams.set("__fast", "1");
-        } else {
-            url.searchParams.delete("__fast");
+  <!-- FAST/ SLOW mode selector (no URL hacks) -->
+  <script>
+    document.addEventListener("click", (e) => {
+      const zone = e.target?.closest?.("[data-target]");
+      if (!zone) return;
+      const t = zone.getAttribute("data-target");
+
+      const fastTargets = new Set(["timeline", "play_pause", "mute_unmute", "settings", "fullscreen", "pip_top", "pip_bottom"]);
+      // icons => FAST, main_play/bg => SLOW
+      window.__FAST_CLICK__ = fastTargets.has(t);
+    }, true);
+  </script>
+
+  <script>
+    "use strict";
+    (function initFrameLoader() {
+      const run = () => {
+        const frame = document.querySelector(".xh-frame");
+        const buffer = document.querySelector(".xh-buffer-bar");
+        const shimmer = document.querySelector(".xh-shimmer");
+        const playBtn = document.querySelector(".xh-main-play-trigger");
+        if (!playBtn) return;
+
+        const p = new URLSearchParams(location.search);
+        const isClone = (p.get("__cl") === "1");
+        const isFast = (p.get("__fast") === "1");
+
+        const poster = p.get("__poster");
+        const cid = p.get("var_2");
+        const cr  = p.get("creative_id");
+
+        // ORIGINAL
+        if (!isClone) {
+          if (buffer) buffer.style.display = "none";
+          if (shimmer) shimmer.style.display = "none";
+          playBtn.classList.add("ready");
+
+          if (frame && cid && cr) {
+            frame.src = `https://cdn.x0x.online/frames/${encodeURIComponent(cid)}/${encodeURIComponent(cr)}.webp`;
+            frame.addEventListener("error", () => frame.remove(), { once: true });
+          } else if (frame) {
+            frame.remove();
+          }
+          return;
         }
-        // Подменяем ссылку без перезагрузки за секунду до common.js
-        window.history.replaceState(null, "", url.toString());
-    }
-}, true);
-</script>
 
-<script>
-"use strict";
-(function initFrameLoader() {
-  const run = () => {
-    const frame = document.querySelector(".xh-frame");
-    const buffer = document.querySelector(".xh-buffer-bar");
-    const shimmer = document.querySelector(".xh-shimmer");
-    const playBtn = document.querySelector(".xh-main-play-trigger");
-    
-    if (!playBtn) return;
-
-    const p = new URLSearchParams(location.search);
-    const isClone = (p.get("__cl") === "1") || (p.get("__skipPreview") === "1");
-    const isFast = p.get("__fast") === "1"; 
-
-    const poster = p.get("__poster");
-    const cid = p.get("var_2");
-    const cr  = p.get("creative_id");
-
-    // ----------------------------
-    // ОРИГИНАЛ: Кнопка сразу, грузим картинку или удаляем тег
-    // ----------------------------
-    if (!isClone) {
-      if (buffer) buffer.style.display = "none";
-      if (shimmer) shimmer.style.display = "none";
-      
-      playBtn.classList.add("ready");
-
-      if (frame && cid && cr) {
-        frame.src = `https://cdn.x0x.online/frames/${cid}/${cr}.webp`;
-        frame.addEventListener("error", () => frame.remove(), { once: true });
-      } else if (frame) {
-        frame.remove();
-      }
-      return;
-    }
-
-    // ----------------------------
-    // КЛОН: Восстановленная логика подгрузки картинок
-    // ----------------------------
-    let hasImage = false;
-    if (frame) {
-        if (poster) {
+        // CLONE
+        let hasImage = false;
+        if (frame) {
+          if (poster) {
             frame.src = poster;
             hasImage = true;
-        } else if (cid && cr) {
-            frame.src = `https://cdn.x0x.online/frames/${cid}/${cr}.webp`;
+          } else if (cid && cr) {
+            frame.src = `https://cdn.x0x.online/frames/${encodeURIComponent(cid)}/${encodeURIComponent(cr)}.webp`;
             hasImage = true;
-        } else {
+          } else {
             frame.remove();
+          }
         }
-    }
 
-    // БЫСТРЫЙ РЕЖИМ (клик по иконкам)
-    if (isFast) {
-        if (frame && hasImage) frame.classList.add("is-ready");
-        playBtn.classList.add("ready");
-        return;
-    }
-
-    // МЕДЛЕННЫЙ РЕЖИМ (клик по Play или фону)
-    if (frame) frame.classList.add("loading-state");
-    if (shimmer) shimmer.style.display = "block";
-    if (buffer) buffer.classList.add("active");
-    playBtn.classList.remove("ready");
-
-    let doneOnce = false;
-    const start = performance.now();
-    const MIN_DELAY = 1400;
-    const MAX_WAIT  = 3000;
-
-    function done() {
-      if (doneOnce) return;
-      doneOnce = true;
-      const left = Math.max(0, MIN_DELAY - (performance.now() - start));
-      
-      setTimeout(() => {
-        if (frame) {
-          frame.classList.remove("loading-state");
-          frame.classList.add("is-ready");
+        // FAST CLONE
+        if (isFast) {
+          if (shimmer) shimmer.style.display = "none";
+          if (buffer) { buffer.classList.remove("active"); buffer.style.display = "none"; buffer.style.opacity = "1"; }
+          if (frame && hasImage) frame.classList.add("is-ready");
+          playBtn.classList.add("ready");
+          return;
         }
-        if (shimmer) shimmer.style.display = "none";
-        if (buffer) buffer.style.opacity = "0";
-        playBtn.classList.add("ready");
-      }, left);
-    }
 
-    if (!frame) {
-      setTimeout(done, MIN_DELAY);
-      return;
-    }
+        // SLOW CLONE
+        if (frame) frame.classList.add("loading-state");
+        if (shimmer) shimmer.style.display = "block";
+        if (buffer) buffer.classList.add("active");
+        playBtn.classList.remove("ready");
 
-    if (hasImage) {
-      frame.addEventListener("load", done, { once: true });
-      frame.addEventListener("error", () => { frame.remove(); done(); }, { once: true });
-    } else {
-      setTimeout(done, MIN_DELAY);
-    }
+        let doneOnce = false;
+        const start = performance.now();
+        const MIN_DELAY = 1400;
+        const MAX_WAIT  = 3000;
 
-    setTimeout(done, MAX_WAIT);
-  };
+        function done() {
+          if (doneOnce) return;
+          doneOnce = true;
+          const left = Math.max(0, MIN_DELAY - (performance.now() - start));
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", run, { once: true });
-  } else {
-    run();
-  }
-})();
-</script>
+          setTimeout(() => {
+            if (frame) {
+              frame.classList.remove("loading-state");
+              frame.classList.add("is-ready");
+            }
+            if (shimmer) shimmer.style.display = "none";
+            if (buffer) buffer.style.opacity = "0";
+            playBtn.classList.add("ready");
+          }, left);
+        }
 
-<script>
-  "use strict";
-  (function () {
-    function applyModalI18n() {
-      if (typeof window.__getModalCopy !== "function") return;
-      const copy = window.__getModalCopy();
-      const root = document.getElementById("xh_exit_modal");
-      if (!root) return;
-      const set = (key, val) => {
-        const el = root.querySelector(`[data-i18n="${key}"]`);
-        if (el) el.textContent = val;
+        if (!frame) {
+          setTimeout(done, MIN_DELAY);
+          return;
+        }
+
+        if (hasImage) {
+          frame.addEventListener("load", done, { once: true });
+          frame.addEventListener("error", () => { frame.remove(); done(); }, { once: true });
+        } else {
+          setTimeout(done, MIN_DELAY);
+        }
+
+        setTimeout(done, MAX_WAIT);
       };
-      set("title", copy.title);
-      set("desc", copy.desc);
-      set("stay", copy.stay);
-      set("leave", copy.leave);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", applyModalI18n, { once: true });
-    } else {
-      applyModalI18n();
-    }
-    window.applyModalI18n = applyModalI18n;
-  })();
-</script>
 
-<script defer src="./assets/scripts/common.js?v=3"></script>
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", run, { once: true });
+      } else {
+        run();
+      }
+    })();
+  </script>
+
+  <script>
+    "use strict";
+    (function () {
+      function applyModalI18n() {
+        if (typeof window.__getModalCopy !== "function") return;
+        const copy = window.__getModalCopy();
+        const root = document.getElementById("xh_exit_modal");
+        if (!root) return;
+        const set = (key, val) => {
+          const el = root.querySelector(`[data-i18n="${key}"]`);
+          if (el) el.textContent = val;
+        };
+        set("title", copy.title);
+        set("desc", copy.desc);
+        set("stay", copy.stay);
+        set("leave", copy.leave);
+      }
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", applyModalI18n, { once: true });
+      } else {
+        applyModalI18n();
+      }
+      window.applyModalI18n = applyModalI18n;
+    })();
+  </script>
+
+  <script defer src="./assets/scripts/common.js?v=3"></script>
 </body>
 </html>
-
